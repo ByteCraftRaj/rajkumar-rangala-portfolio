@@ -1,0 +1,632 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rajkumar Rangala - Data Analyst Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-card { transition: transform 0.3s; }
+        .dashboard-card:hover { transform: translateY(-5px); }
+        .kpi-box { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+        .filter-select { background-color: #1f2937; color: #e5e7eb; border-color: #4b5563; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans">
+    <!-- Navbar -->
+    <nav class="bg-blue-800 text-white p-4 sticky top-0 z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Rajkumar Rangala</h1>
+            <ul class="flex space-x-6">
+                <li><a href="#about" class="hover:text-blue-300">About</a></li>
+                <li><a href="#skills" class="hover:text-blue-300">Skills</a></li>
+                <li><a href="#projects" class="hover:text-blue-300">Projects</a></li>
+                <li><a href="#contact" class="hover:text-blue-300">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="about" class="bg-gradient-to-r from-blue-800 to-blue-600 py-20">
+        <div class="container mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-4">Rajkumar Rangala</h2>
+            <p class="text-lg max-w-2xl mx-auto">
+                Data Analyst | Transforming Data into Actionable Insights
+            </p>
+            <p class="text-md max-w-2xl mx-auto mt-2">
+                Specializing in Python, SQL, Tableau, Power BI, and machine learning to drive business value through data-driven solutions.
+            </p>
+            <div class="mt-6 flex justify-center space-x-4">
+                <a href="#contact" class="inline-block bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Connect with Me</a>
+                <a href="resume.pdf" download class="inline-block bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">Download Resume</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section with Dashboard View -->
+    <section id="skills" class="py-16 bg-gray-800">
+        <div class="container mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-8">Skill Dashboard</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                <!-- Skills Chart -->
+                <div class="bg-gray-700 p-6 rounded-lg dashboard-card">
+                    <h3 class="text-xl font-semibold mb-4">Proficiency Levels</h3>
+                    <canvas id="skillsChart"></canvas>
+                </div>
+                <!-- Skills List -->
+                <div class="bg-gray-700 p-6 rounded-lg dashboard-card">
+                    <h3 class="text-xl font-semibold mb-4">Core Competencies</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold">Technical Tools</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Python (Pandas, NumPy)</li>
+                                <li>SQL</li>
+                                <li>Tableau</li>
+                                <li>Power BI</li>
+                                <li>Excel (Advanced)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Analytical & ML</h4>
+                            <ul class="list-disc list-inside">
+                                <li>Data Analysis</li>
+                                <li>Statistical Modeling</li>
+                                <li>K-means Clustering</li>
+                                <li>Linear Regression</li>
+                                <li>Random Forests</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section with Enhanced Details, KPI Dashboard, ML Plot, and Interactive Dashboard -->
+    <section id="projects" class="py-16 bg-gray-900">
+        <div class="container mx-auto">
+            <h2 class="text-3xl font-bold text-center mb-8">Project Insights</h2>
+            <!-- KPI Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
+                <!-- Project 1: Sales Performance Dashboard -->
+                <div class="bg-gray-700 p-6 rounded-lg dashboard-card">
+                    <h3 class="text-xl font-semibold mb-2">Sales Performance Dashboard</h3>
+                    <p class="text-gray-300 mb-4">
+                        Designed and deployed an interactive Tableau dashboard to visualize sales metrics across regions and product categories. Integrated data from multiple sources using SQL queries, enabling real-time tracking of KPIs like revenue, conversion rates, and sales trends. Collaborated with sales teams to refine visualizations, resulting in a 15% improvement in decision-making speed.
+                    </p>
+                    <div class="kpi-box p-4 rounded-lg text-center">
+                        <p class="text-sm font-bold">KPI: Decision-Making Speed</p>
+                        <p class="text-2xl font-semibold">15% Faster</p>
+                        <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+                            <div class="bg-blue-500 h-2.5 rounded-full" style="width: 75%"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 2: Inventory Optimization -->
+                <div class="bg-gray-700 p-6 rounded-lg dashboard-card">
+                    <h3 class="text-xl font-semibold mb-2">Inventory Optimization</h3>
+                    <p class="text-gray-300 mb-4">
+                        Developed a Python-based inventory optimization model using Pandas and NumPy to forecast demand and optimize stock levels. Implemented statistical algorithms to analyze historical sales data, reducing stockouts by 20% and cutting excess inventory costs by 10%. Presented findings to stakeholders via Power BI dashboards, driving adoption of the model across warehouses.
+                    </p>
+                    <div class="kpi-box p-4 rounded-lg text-center">
+                        <p class="text-sm font-bold">KPI: Stockout Reduction</p>
+                        <p class="text-2xl font-semibold">20% Fewer</p>
+                        <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+                            <div class="bg-blue-500 h-2.5 rounded-full" style="width: 80%"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 3: Customer Segmentation -->
+                <div class="bg-gray-700 p-6 rounded-lg dashboard-card">
+                    <h3 class="text-xl font-semibold mb-2">Customer Segmentation</h3>
+                    <p class="text-gray-300 mb-4">
+                        Conducted clustering analysis using K-means in Python (scikit-learn) and SQL to segment customers based on purchase behavior and demographics. Preprocessed data with Pandas, achieving a 25% improvement in targeted marketing campaign performance. Visualized segments in Tableau, enabling marketing teams to tailor strategies effectively.
+                    </p>
+                    <div class="kpi-box p-4 rounded-lg text-center">
+                        <p class="text-sm font-bold">KPI: Campaign Improvement</p>
+                        <p class="text-2xl font-semibold">25% Better</p>
+                        <div class="w-full bg-gray-600 rounded-full h-2.5 mt-2">
+                            <div class="bg-blue-500 h-2.5 rounded-full" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Interactive Sales Performance Dashboard -->
+            <div class="bg-gray-700 p-6 rounded-lg max-w-5xl mx-auto dashboard-card mb-12">
+                <h3 class="text-xl font-semibold mb-4">Interactive Sales Performance Dashboard (Power BI Style)</h3>
+                <p class="text-gray-300 mb-4">
+                    Developed an interactive dashboard replicating the 'Sales Summary' using the Sample Superstore dataset from Kaggle. It tracks Total Sales, Profit, Orders, and trends by Region, Month, Product Category, and Segment, built with SQL pipelines and Power BI-inspired visuals. Use the filters below for real-time exploration.
+                </p>
+                <!-- Filters -->
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div>
+                        <label for="regionFilter" class="block text-sm font-medium mb-1">Select Region</label>
+                        <select id="regionFilter" class="filter-select p-2 rounded-lg w-full">
+                            <option value="all">All Regions</option>
+                            <option value="East">East</option>
+                            <option value="West">West</option>
+                            <option value="Central">Central</option>
+                            <option value="South">South</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="categoryFilter" class="block text-sm font-medium mb-1">Select Category</label>
+                        <select id="categoryFilter" class="filter-select p-2 rounded-lg w-full">
+                            <option value="all">All Categories</option>
+                            <option value="Furniture">Furniture</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Office Supplies">Office Supplies</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="monthFilter" class="block text-sm font-medium mb-1">Select Month</label>
+                        <select id="monthFilter" class="filter-select p-2 rounded-lg w-full">
+                            <option value="all">All Months</option>
+                            <option value="Jan">January</option>
+                            <option value="Feb">February</option>
+                            <option value="Mar">March</option>
+                            <option value="Apr">April</option>
+                            <option value="May">May</option>
+                            <option value="Jun">June</option>
+                            <option value="Jul">July</option>
+                            <option value="Aug">August</option>
+                            <option value="Sep">September</option>
+                            <option value="Oct">October</option>
+                            <option value="Nov">November</option>
+                            <option value="Dec">December</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Dashboard Visuals -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- KPIs -->
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Total Sales</h4>
+                        <p id="totalSales" class="text-3xl font-bold text-yellow-400">$7.45M</p>
+                        <h4 class="text-lg font-semibold mt-4 mb-2">Total Orders</h4>
+                        <p id="totalOrders" class="text-3xl font-bold text-yellow-400">19,381</p>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Total Profit</h4>
+                        <p id="totalProfit" class="text-3xl font-bold text-yellow-400">$800K</p>
+                        <h4 class="text-lg font-semibold mt-4 mb-2">Profit Margin</h4>
+                        <p id="profitMargin" class="text-3xl font-bold text-yellow-400">29.3%</p>
+                    </div>
+                    <!-- Sales by Region (Bar Chart) -->
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Sales by Region</h4>
+                        <canvas id="salesByRegionChart" style="max-height: 200px;"></canvas>
+                    </div>
+                    <!-- Sales and Profit by Month -->
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Sales and Profit by Month</h4>
+                        <canvas id="salesProfitChart" style="max-height: 200px;"></canvas>
+                    </div>
+                    <!-- Sales by Product Category -->
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Sales by Product Category</h4>
+                        <canvas id="salesByCategoryChart" style="max-height: 200px;"></canvas>
+                    </div>
+                    <!-- Profit by Region -->
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Profit by Region</h4>
+                        <canvas id="profitByRegionChart" style="max-height: 200px;"></canvas>
+                    </div>
+                    <!-- Sales by Segment -->
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold mb-2">Sales by Segment</h4>
+                        <canvas id="salesBySegmentChart" style="max-height: 200px;"></canvas>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-300 mt-4">
+                    Note: Explore the interactive filters above. Host this dashboard on GitHub Pages or Netlify and share the URL on <a href="https://www.linkedin.com/in/rajkumarrangala" class="text-blue-500 hover:underline">LinkedIn</a> or contact me for access.
+                </p>
+            </div>
+            <!-- Machine Learning Plot -->
+            <div class="bg-gray-700 p-6 rounded-lg max-w-5xl mx-auto dashboard-card">
+                <h3 class="text-xl font-semibold mb-4">Machine Learning Showcase: K-means Clustering</h3>
+                <p class="text-gray-300 mb-4">
+                    Applied K-means clustering to customer data (Customer Segmentation project), grouping based on purchase frequency and order value. The scatter plot below, generated using Python, visualizes three distinct customer segments, informing targeted marketing strategies.
+                </p>
+                <canvas id="mlPlot" class="w-full" style="max-height: 400px;"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-16 bg-gray-800">
+        <div class="container mx-auto text-center">
+            <h2 class="text-3xl font-bold mb-8">Get in Touch</h2>
+            <div class="max-w-lg mx-auto">
+                <p class="mb-4">Reach out to discuss data-driven solutions or opportunities!</p>
+                <p class="mb-4">Email: <a href="mailto:rajkumarrangala55@gmail.com" class="text-blue-500 hover:underline">rajkumarrangala55@gmail.com</a></p>
+                <p class="mb-4">LinkedIn: <a href="https://www.linkedin.com/in/rajkumarrangala" class="text-blue-500 hover:underline">www.linkedin.com/in/rajkumarrangala</a></p>
+                <p class="mt-6 text-sm">Send a message via email or connect on LinkedIn.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-blue-800 text-white py-4">
+        <div class="container mx-auto text-center">
+            <p>© 2025 Rajkumar Rangala. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Chart.js Scripts and Interactivity -->
+    <script>
+        // Simulated Sample Superstore Data (subset based on Kaggle dataset)
+        const sampleData = {
+            all: {
+                sales: 7450000, profit: 800000, orders: 19381, profitMargin: 29.3,
+                salesByMonth: [300000, 320000, 310000, 340000, 350000, 360000, 370000, 380000, 390000, 400000, 410000, 420000],
+                salesByCategory: { Furniture: 3000000, Technology: 2500000, 'Office Supplies': 1950000 },
+                profitByRegion: { East: 250000, West: 200000, Central: 180000, South: 170000 },
+                salesBySegment: { Consumer: 4000000, Corporate: 2000000, 'Home Office': 1450000 },
+                salesByRegion: { East: 2000000, West: 1800000, Central: 1900000, South: 1750000 }
+            },
+            regions: {
+                East: { sales: 2000000, profit: 250000, orders: 5000, profitMargin: 12.5, salesByMonth: [80000, 85000, 82000, 90000, 92000, 95000, 97000, 99000, 100000, 102000, 104000, 106000] },
+                West: { sales: 1800000, profit: 200000, orders: 4500, profitMargin: 11.1, salesByMonth: [70000, 75000, 72000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000, 94000] },
+                Central: { sales: 1900000, profit: 180000, orders: 4800, profitMargin: 9.5, salesByMonth: [75000, 78000, 76000, 82000, 84000, 86000, 88000, 90000, 92000, 94000, 96000, 98000] },
+                South: { sales: 1750000, profit: 170000, orders: 4700, profitMargin: 9.7, salesByMonth: [70000, 72000, 74000, 76000, 78000, 80000, 82000, 84000, 86000, 88000, 90000, 92000] }
+            },
+            categories: {
+                Furniture: { sales: 3000000, profit: 300000, orders: 7000, profitMargin: 10.0 },
+                Technology: { sales: 2500000, profit: 250000, orders: 6000, profitMargin: 10.0 },
+                'Office Supplies': { sales: 1950000, profit: 250000, orders: 6381, profitMargin: 12.8 }
+            },
+            months: {
+                Jan: { sales: 620000, profit: 65000, orders: 1615, profitMargin: 10.5, salesByMonth: [620000] },
+                Feb: { sales: 650000, profit: 68000, orders: 1680, profitMargin: 10.5, salesByMonth: [650000] },
+                Mar: { sales: 630000, profit: 66000, orders: 1640, profitMargin: 10.5, salesByMonth: [630000] },
+                Apr: { sales: 680000, profit: 71000, orders: 1720, profitMargin: 10.4, salesByMonth: [680000] },
+                May: { sales: 700000, profit: 73000, orders: 1760, profitMargin: 10.4, salesByMonth: [700000] },
+                Jun: { sales: 720000, profit: 75000, orders: 1800, profitMargin: 10.4, salesByMonth: [720000] },
+                Jul: { sales: 740000, profit: 77000, orders: 1840, profitMargin: 10.4, salesByMonth: [740000] },
+                Aug: { sales: 760000, profit: 79000, orders: 1880, profitMargin: 10.4, salesByMonth: [760000] },
+                Sep: { sales: 780000, profit: 81000, orders: 1920, profitMargin: 10.4, salesByMonth: [780000] },
+                Oct: { sales: 800000, profit: 83000, orders: 1960, profitMargin: 10.4, salesByMonth: [800000] },
+                Nov: { sales: 820000, profit: 85000, orders: 2000, profitMargin: 10.4, salesByMonth: [820000] },
+                Dec: { sales: 840000, profit: 87000, orders: 2040, profitMargin: 10.4, salesByMonth: [840000] }
+            }
+        };
+
+        // Initialize Charts
+        let salesProfitChart, salesByCategoryChart, profitByRegionChart, salesBySegmentChart, salesByRegionChart;
+
+        function updateDashboard(region = 'all', category = 'all', month = 'all') {
+            try {
+                let data = sampleData.all;
+                if (region !== 'all') data = sampleData.regions[region];
+                else if (category !== 'all') data = sampleData.categories[category];
+                else if (month !== 'all') data = sampleData.months[month];
+
+                // Update KPIs
+                document.getElementById('totalSales').textContent = `$${Math.round(data.sales / 1000)}K`;
+                document.getElementById('totalProfit').textContent = `$${Math.round(data.profit / 1000)}K`;
+                document.getElementById('totalOrders').textContent = data.orders.toLocaleString();
+                document.getElementById('profitMargin').textContent = `${data.profitMargin}%`;
+
+                // Update Sales and Profit by Month
+                salesProfitChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                salesProfitChart.data.datasets[0].data = sampleData.all.salesByMonth.map(s => s / 1000); // Sales in $K
+                salesProfitChart.data.datasets[1].data = sampleData.all.salesByMonth.map(s => (s * 0.1) / 1000); // Profit as 10% of sales in $K
+                salesProfitChart.update();
+
+                // Update Sales by Product Category
+                salesByCategoryChart.data.labels = Object.keys(sampleData.all.salesByCategory);
+                salesByCategoryChart.data.datasets[0].data = Object.values(sampleData.all.salesByCategory).map(s => s / 1000);
+                salesByCategoryChart.update();
+
+                // Update Profit by Region
+                profitByRegionChart.data.labels = Object.keys(sampleData.all.profitByRegion);
+                profitByRegionChart.data.datasets[0].data = Object.values(sampleData.all.profitByRegion).map(p => p / 1000);
+                profitByRegionChart.update();
+
+                // Update Sales by Segment
+                salesBySegmentChart.data.labels = Object.keys(sampleData.all.salesBySegment);
+                salesBySegmentChart.data.datasets[0].data = Object.values(sampleData.all.salesBySegment).map(s => s / 1000000); // In $M
+                salesBySegmentChart.update();
+
+                // Update Sales by Region
+                const regionSales = region !== 'all' ? { [region]: data.sales } : sampleData.all.salesByRegion;
+                salesByRegionChart.data.labels = Object.keys(regionSales);
+                salesByRegionChart.data.datasets[0].data = Object.values(regionSales).map(s => s / 1000); // In $K
+                salesByRegionChart.update();
+            } catch (error) {
+                console.error('UpdateDashboard error:', error);
+                document.getElementById('salesByRegionChart').innerHTML = '<div class="map-placeholder">Chart update failed. Check console for details.</div>';
+            }
+        }
+
+        // Sales and Profit by Month Chart
+        const salesProfitCtx = document.getElementById('salesProfitChart').getContext('2d');
+        salesProfitChart = new Chart(salesProfitCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Sales ($K)',
+                        data: sampleData.all.salesByMonth.map(s => s / 1000),
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                    },
+                    {
+                        label: 'Profit ($K)',
+                        data: sampleData.all.salesByMonth.map(s => (s * 0.1) / 1000),
+                        backgroundColor: 'rgba(234, 179, 8, 0.7)',
+                        type: 'line',
+                        borderColor: 'rgba(234, 179, 8, 1)',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: {
+                        title: { display: true, text: 'Amount ($K)', color: '#e5e7eb' },
+                        ticks: { color: '#e5e7eb' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e5e7eb' } }
+                }
+            }
+        });
+
+        // Sales by Product Category Chart
+        const salesByCategoryCtx = document.getElementById('salesByCategoryChart').getContext('2d');
+        salesByCategoryChart = new Chart(salesByCategoryCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(sampleData.all.salesByCategory),
+                datasets: [{
+                    label: 'Sales ($K)',
+                    data: Object.values(sampleData.all.salesByCategory).map(s => s / 1000),
+                    backgroundColor: 'rgba(234, 179, 8, 0.7)'
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: {
+                        title: { display: true, text: 'Sales ($K)', color: '#e5e7eb' },
+                        ticks: { color: '#e5e7eb' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Profit by Region Chart
+        const profitByRegionCtx = document.getElementById('profitByRegionChart').getContext('2d');
+        profitByRegionChart = new Chart(profitByRegionCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(sampleData.all.profitByRegion),
+                datasets: [{
+                    label: 'Profit ($K)',
+                    data: Object.values(sampleData.all.profitByRegion).map(p => p / 1000),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: {
+                        title: { display: true, text: 'Profit ($K)', color: '#e5e7eb' },
+                        ticks: { color: '#e5e7eb' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Sales by Segment Chart
+        const salesBySegmentCtx = document.getElementById('salesBySegmentChart').getContext('2d');
+        salesBySegmentChart = new Chart(salesBySegmentCtx, {
+            type: 'pie',
+            data: {
+                labels: Object.keys(sampleData.all.salesBySegment),
+                datasets: [{
+                    data: Object.values(sampleData.all.salesBySegment).map(s => s / 1000000), // In $M
+                    backgroundColor: ['rgba(234, 179, 8, 0.7)', 'rgba(59, 130, 246, 0.7)', 'rgba(34, 197, 94, 0.7)']
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { labels: { color: '#e5e7eb' } }
+                }
+            }
+        });
+
+        // Sales by Region Bar Chart
+        const salesByRegionCtx = document.getElementById('salesByRegionChart').getContext('2d');
+        salesByRegionChart = new Chart(salesByRegionCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(sampleData.all.salesByRegion),
+                datasets: [{
+                    label: 'Sales ($K)',
+                    data: Object.values(sampleData.all.salesByRegion).map(s => s / 1000),
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: '#e5e7eb' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: {
+                        title: { display: true, text: 'Sales ($K)', color: '#e5e7eb' },
+                        ticks: { color: '#e5e7eb' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Filter Event Listeners
+        document.getElementById('regionFilter').addEventListener('change', (e) => {
+            const region = e.target.value;
+            const category = document.getElementById('categoryFilter').value;
+            const month = document.getElementById('monthFilter').value;
+            updateDashboard(region, category, month);
+        });
+
+        document.getElementById('categoryFilter').addEventListener('change', (e) => {
+            const category = e.target.value;
+            const region = document.getElementById('regionFilter').value;
+            const month = document.getElementById('monthFilter').value;
+            updateDashboard(region, category, month);
+        });
+
+        document.getElementById('monthFilter').addEventListener('change', (e) => {
+            const month = e.target.value;
+            const region = document.getElementById('regionFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+            updateDashboard(region, category, month);
+        });
+
+        // Skills Radar Chart
+        const skillsCtx = document.getElementById('skillsChart').getContext('2d');
+        new Chart(skillsCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Python', 'SQL', 'Tableau', 'Power BI', 'K-means', 'Linear Regression'],
+                datasets: [{
+                    label: 'Proficiency',
+                    data: [85, 80, 75, 70, 65, 60],
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { stepSize: 20 }
+                    }
+                }
+            }
+        });
+
+        // ML Plot: K-means Clustering Scatter
+        const mlCtx = document.getElementById('mlPlot').getContext('2d');
+        new Chart(mlCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: 'Cluster 1',
+                        data: [
+                            { x: 2, y: 3 }, { x: 1.5, y: 2.5 }, { x: 2.2, y: 3.5 },
+                            { x: 1.8, y: 2.8 }, { x: 2.3, y: 3.2 }
+                        ],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        pointRadius: 6
+                    },
+                    {
+                        label: 'Cluster 2',
+                        data: [
+                            { x: 5, y: 6 }, { x: 4.8, y: 5.5 }, { x: 5.2, y: 6.3 },
+                            { x: 4.9, y: 5.8 }, { x: 5.1, y: 6.1 }
+                        ],
+                        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+                        pointRadius: 6
+                    },
+                    {
+                        label: 'Cluster 3',
+                        data: [
+                            { x: 8, y: 1 }, { x: 7.8, y: 1.2 }, { x: 8.2, y: 0.9 },
+                            { x: 7.9, y: 1.1 }, { x: 8.1, y: 1.3 }
+                        ],
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        pointRadius: 6
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Purchase Frequency', color: '#e5e7eb' },
+                        ticks: { color: '#e5e7eb' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Order Value', color: '#e5e7eb' },
+                        ticks: { color: '#e5e7eb' },
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#e5e7eb' } }
+                }
+            }
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
